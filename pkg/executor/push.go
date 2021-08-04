@@ -260,7 +260,7 @@ func DoPush(image v1.Image, opts *config.KanikoOptions) error {
 	}
 
 	// continue pushing unless an error occurs
-	for _, destRef := range destRefs {
+	for i, destRef := range destRefs {
 		registryName := destRef.Repository.Registry.Name()
 		if opts.Insecure || opts.InsecureRegistries.Contains(registryName) {
 			newReg, err := name.NewRegistry(registryName, name.WeakValidation, name.Insecure)
@@ -286,6 +286,12 @@ func DoPush(image v1.Image, opts *config.KanikoOptions) error {
 
 		if err := util.Retry(retryFunc, opts.PushRetry, 1000); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to push to destination %s", destRef))
+		}
+
+		if i == 0 && opts.DockerPull {
+			docker.Wait()
+			docker.pull(destRef.Name())
+			defer docker.Wait()
 		}
 	}
 	timing.DefaultRun.Stop(t)
@@ -355,7 +361,8 @@ func pushLayerToCache(opts *config.KanikoOptions, cacheKey string, tarPath strin
 		return errors.Wrap(err, "appending layer onto empty image")
 	}
 	cacheOpts := *opts
-	cacheOpts.TarPath = ""   // tarPath doesn't make sense for Docker layers
+	cacheOpts.TarPath = "" // tarPath doesn't make sense for Docker layers
+	cacheOpts.DockerPull = false
 	cacheOpts.NoPush = false // we want to push cached layers
 	cacheOpts.Destinations = []string{cache}
 	cacheOpts.InsecureRegistries = opts.InsecureRegistries

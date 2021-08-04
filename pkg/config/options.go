@@ -53,6 +53,7 @@ type KanikoOptions struct {
 	CustomPlatform         string
 	Bucket                 string
 	TarPath                string
+	DockerPull             bool
 	Target                 string
 	CacheRepo              string
 	DigestFile             string

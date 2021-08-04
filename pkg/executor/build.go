@@ -502,6 +502,9 @@ func (s *stageBuilder) saveLayerToImage(layer v1.Layer, createdBy string) error 
 func CalculateDependencies(stages []config.KanikoStage, opts *config.KanikoOptions, stageNameToIdx map[string]string) (map[int][]string, error) {
 	images := []v1.Image{}
 	depGraph := map[int][]string{}
+
+	docker.pull(stages[0].BaseName)
+
 	for _, s := range stages {
 		ba := dockerfile.NewBuildArgs(opts.BuildArgs)
 		ba.AddMetaArgs(s.MetaArgs)
